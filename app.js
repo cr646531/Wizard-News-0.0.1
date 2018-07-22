@@ -3,6 +3,8 @@ const morgan = require("morgan");
 const postList = require('./views/postList');
 const postDetails = require('./views/postDetails');
 const client = require('./db/index');
+const search = require('./views/search');
+const events = require('events');
 
 const app = express();
 
@@ -39,6 +41,14 @@ app.get("/posts/:number", async (req, res, next) => {
     res.send(postDetails(posts, upvotes));
   } catch (error) {
     next(error)
+  }
+});
+
+app.get("/search", async(req, res, next) => {
+  try{
+    res.send(search());
+  } catch (error){
+    next(error);
   }
 });
 
