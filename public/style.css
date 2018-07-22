@@ -1,3 +1,5 @@
+
+
 * {
   box-sizing: border-box;
 }
@@ -29,6 +31,10 @@ header {
   color: #fff;
   padding: 3px;
   height: 26px;
+}
+
+header a {
+  color: white;
 }
 
 header > img {
@@ -69,6 +75,11 @@ textarea {
   padding-bottom: 25px;
 }
 
+.input-group {
+  padding: 20px;
+  width: 35%;
+}
+
 
 .news-item {
   padding: 0 15px;
@@ -80,4 +91,13 @@ textarea {
 
 .news-info {
   margin-left: 40px;
+}
+
+input {
+  width: 300px;
+}
+
+submit {
+  width: 75px;
+  display: inLine;
 }

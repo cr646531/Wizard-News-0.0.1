@@ -1,76 +1,45 @@
 const express = require("express");
 const morgan = require("morgan");
-const postBank = require("./postBank");
-const timeAgo = require('node-time-ago');
-
-
+const postList = require('./views/postList');
+const postDetails = require('./views/postDetails');
+const client = require('./db/index');
 
 const app = express();
 
 app.use(morgan('dev'));
 app.use(express.static('public'));
 
-app.get("/", (req, res) => {
-  const posts = postBank.list();
+app.get("/", async (req, res, next) => {
+  
+  const text = `SELECT posts.*, counting.upvotes 
+  FROM posts 
+  INNER JOIN (SELECT postId, COUNT(*) as upvotes FROM upvotes GROUP BY postId) AS counting
+  ON posts.id = counting.postId;`
 
-  const html = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>Wizard News</title>
-    <link rel="stylesheet" href="/style.css" />
-  </head>
-  <body>
-    <div class="news-list">
-      <header><img src="/logo.png"/>Wizard News</header>
-      ${posts.map(post => `
-        <div class='news-item'>
-          <p>
-            <span class="news-position">${post.id}. ▲</span><a href="/posts/${post.id}">${post.title}</a>
-            <small>(by ${post.name})</small>
-          </p>
-          <small class="news-info">
-            ${post.upvotes} upvotes | ${timeAgo(post.date)}
-          </small>
-        </div>`
-      )}
-    </div>
-  </body>
-</html>`;
-
-    res.send(html);
+  try {
+    const data = await client.query(text);
+    const posts = data.rows;
+    res.send(postList(posts));
+  } catch (error) {
+    next(error)
+  }
 });
 
-app.get("/posts/:id", (req, res, next) => {
-  const post = postBank.find(req.params.id);
+app.get("/posts/:number", async (req, res, next) => {
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Wizard News</title>
-      <link rel="stylesheet" href="/style.css" />
-    </head>
-    <body>
-      <div class="news-list">
-        <header><img src="/logo.png"/>Wizard News</header>
-          <div class='news-item'>
-            <p>
-              <span class="news-position">${post.id}. ▲</span>${post.title}
-              <small>(by ${post.name})</small>
-              <p>
-              ${post.content}
-              </p>
-              </p>
-            <small class="news-info">
-              ${post.upvotes} upvotes | ${post.date}
-            </small>
-          </div>
-      </div>
-    </body>
-    </html>`
+  const getPost = 'SELECT id, userid, title, content, date FROM posts WHERE id=$1';
+  const getUpvotes = 'SELECT COUNT(postId) FROM upvotes WHERE postId=$1';
+  const values = [req.params.number * 1];
 
-    res.send(html);
+  try {
+    const data = await client.query(getPost, values);
+    const data2 = await client.query(getUpvotes, values);
+    const posts = data.rows;
+    const upvotes = data2.rows;
+    res.send(postDetails(posts, upvotes));
+  } catch (error) {
+    next(error)
+  }
 });
 
 
